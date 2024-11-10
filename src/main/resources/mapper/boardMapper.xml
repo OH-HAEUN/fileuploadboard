@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oheproject.fileuploadboard.board.BoardMapper">
+
+    <insert id="insertBoard" parameterType="com.oheproject.fileuploadboard.board.BoardDTO">
+        <selectKey resultType="int" keyProperty="id" order="BEFORE">
+            SELECT emp_seq.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO BOARDS (id, title, memo, writer, writerid, createdate, file_expiry_date, download_limit, download_click)
+        VALUES (#{id}, #{title}, #{memo, jdbcType=VARCHAR}, #{writer}, #{writerid}, SYSDATE, TO_DATE(#{file_expiry_date}, 'YYYY-MM-DD')+0.99999, #{download_limit}, 0)
+    </insert>
+
+    <insert id="insertFile" parameterType="com.oheproject.fileuploadboard.board.FileDTO">
+        INSERT INTO SAVE_FILE (id, fileorigname, filename, fileuuid)
+        VALUES (#{id}, #{fileorigname}, #{filename}, #{fileuuid})
+    </insert>
+
+    <select id="boardList" resultType="com.oheproject.fileuploadboard.board.BoardDTO">
+        SELECT id, title, writer, TO_CHAR(createdate, 'YYYY-MM-DD HH24:MI') AS createdate
+        FROM BOARDS
+        ORDER BY ID DESC
+    </select>
+
+    <select id="boardView" resultType="com.oheproject.fileuploadboard.board.BoardDTO">
+        SELECT id,
+               title,
+               memo,
+               writer,
+               writerid,
+               TO_CHAR(createdate, 'YYYY-MM-DD HH24:MI') AS createdate,
+               TO_CHAR(updatedate, 'YYYY-MM-DD HH24:MI') AS updatedate,
+               TO_CHAR(file_expiry_date, 'YYYY-MM-DD HH24:MI') AS file_expiry_date,
+               download_limit,
+               download_click
+        FROM BOARDS
+        WHERE id = #{id}
+    </select>
+
+    <select id="fileList" resultType="com.oheproject.fileuploadboard.board.FileDTO">
+        SELECT *
+        FROM SAVE_FILE
+        WHERE id = #{id}
+    </select>
+
+    <select id="fileDownload" resultType="String">
+        SELECT fileorigname FROM SAVE_FILE WHERE filename = #{filename}
+    </select>
+
+    <delete id="deleteBoard" parameterType="com.oheproject.fileuploadboard.board.BoardDTO">
+        DELETE
+        FROM BOARDS
+        WHERE id = #{id}
+    </delete>
+
+    <delete id="deleteFile" parameterType="com.oheproject.fileuploadboard.board.FileDTO">
+        DELETE
+        FROM SAVE_FILE
+        WHERE id = #{id}
+    </delete>
+
+    <update id="updateBoard" parameterType="com.oheproject.fileuploadboard.board.BoardDTO">
+        UPDATE BOARDS
+        SET title        = #{title},
+            memo         = #{memo, jdbcType=VARCHAR},
+            updatedate   = SYSDATE,
+            file_expiry_date = TO_DATE(#{file_expiry_date}, 'YYYY-MM-DD')+0.99999,
+            download_limit = #{download_limit},
+            download_click = 0
+        WHERE id = #{id}
+    </update>
+
+    <!-- 게시글 수정 시 기존 첨부했던 파일 삭제 처리 -->
+    <delete id="updateBoardFileDel" parameterType="com.oheproject.fileuploadboard.board.FileDTO">
+        DELETE
+        FROM SAVE_FILE
+        WHERE FILEUUID = #{fileuuid}
+    </delete>
+
+    <!-- 총 게시글 갯수 출력 -->
+    <select id="countBoard" resultType="int">
+        SELECT COUNT(*) FROM BOARDS
+    </select>
+
+    <!-- 페이징 처리 후 게시글 조회 -->
+    <select id="selectBoard" resultType="com.oheproject.fileuploadboard.board.BoardDTO">
+        SELECT *
+        FROM (
+                 SELECT ROWNUM RN, A.*
+                 FROM (
+                          SELECT *
+                          FROM BOARDS
+                          ORDER BY id DESC
+                      ) A
+             )
+        WHERE RN BETWEEN #{start} AND #{end}
+    </select>
+
+    <!-- 파일 다운로드 클릭 -->
+    <update id="updateDownloadClk" parameterType="_int">
+        UPDATE BOARDS
+        SET download_click = download_click + 1
+        WHERE id = #{id}
+    </update>
+
+</mapper>

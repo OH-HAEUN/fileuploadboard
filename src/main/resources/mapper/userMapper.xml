@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.oheproject.fileuploadboard.user.UserMapper">
+
+    <insert id="insertUser" parameterType="com.oheproject.fileuploadboard.user.UserDTO">
+        <selectKey resultType="int" keyProperty="id" order="BEFORE">
+            SELECT user_seq.NEXTVAL FROM DUAL
+        </selectKey>
+
+        INSERT INTO Users (id, username, password, name, email, company)
+        VALUES (#{id}, #{username}, #{password}, #{name}, #{email}, #{company})
+    </insert>
+
+    <select id="checkUsername" parameterType="com.oheproject.fileuploadboard.user.UserDTO" resultType="int">
+        SELECT count(username) FROM Users WHERE username = #{username}
+    </select>
+
+    <select id="selectUser" parameterType="String" resultType="com.oheproject.fileuploadboard.user.CustomUserDetails">
+        SELECT * FROM Users WHERE username = #{username}
+    </select>
+
+    <select id="currentName" parameterType="String" resultType="com.oheproject.fileuploadboard.user.UserDTO">
+        SELECT name, company FROM Users WHERE username = #{username}
+    </select>
+
+    <select id="userInfo" parameterType="String" resultType="com.oheproject.fileuploadboard.user.UserDTO">
+        SELECT * FROM Users WHERE username = #{username}
+    </select>
+
+</mapper>
